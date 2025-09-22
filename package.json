@@ -7,8 +7,8 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "build": "npm run clean && npm run copy-files",
-    "clean": "rm -rf dist && mkdir -p dist",
-    "copy-files": "cp -r index.js package.json src dist/",
+    "clean": "if exist dist rmdir /s /q dist && mkdir dist",
+    "copy-files": "copy index.js dist\\ && copy package.json dist\\ && xcopy src dist\\src\\ /e /i",
     "test": "echo 'No tests specified'"
   },
   "keywords": [

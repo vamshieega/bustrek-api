@@ -10,10 +10,12 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Import database connection
-const connectDB = require('./config/db');
+const { connectDB, checkConnection } = require('./config/dbConnect');
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB (optional for serverless - connections are established on-demand)
+if (process.env.NODE_ENV !== 'production') {
+  connectDB().catch(console.error);
+}
 
 // Middleware
 app.use(cors());
@@ -42,12 +44,25 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+app.get('/health', async (req, res) => {
+  try {
+    const dbHealth = await checkConnection();
+    res.json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: dbHealth,
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      error: error.message,
+      environment: process.env.NODE_ENV || 'development'
+    });
+  }
 });
 
 // API Routes

@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const sessionManager = require('../config/sessions');
+const { withConnection } = require('../config/dbConnect');
 
 const authController = {
   // Signup
@@ -15,38 +16,40 @@ const authController = {
         });
       }
 
-      // Check if user already exists
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(409).json({
-          success: false,
-          message: 'User with this email already exists'
-        });
-      }
-
-      // Create new user
-      const user = new User({
-        name,
-        email,
-        password
-      });
-
-      await user.save();
-
-      // Generate session token
-      const sessionToken = sessionManager.create(user.id, user.email);
-
-      res.status(201).json({
-        success: true,
-        message: 'User created successfully',
-        data: {
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email
-          },
-          sessionToken
+      await withConnection(async () => {
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+          return res.status(409).json({
+            success: false,
+            message: 'User with this email already exists'
+          });
         }
+
+        // Create new user
+        const user = new User({
+          name,
+          email,
+          password
+        });
+
+        await user.save();
+
+        // Generate session token
+        const sessionToken = sessionManager.create(user.id, user.email);
+
+        res.status(201).json({
+          success: true,
+          message: 'User created successfully',
+          data: {
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email
+            },
+            sessionToken
+          }
+        });
       });
 
     } catch (error) {
@@ -72,38 +75,40 @@ const authController = {
         });
       }
 
-      // Find user by email
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Invalid email or password'
-        });
-      }
-
-      // Check password
-      const isPasswordValid = await user.comparePassword(password);
-      if (!isPasswordValid) {
-        return res.status(401).json({
-          success: false,
-          message: 'Invalid email or password'
-        });
-      }
-
-      // Generate session token
-      const sessionToken = sessionManager.create(user.id, user.email);
-
-      res.status(200).json({
-        success: true,
-        message: 'Login successful',
-        data: {
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email
-          },
-          sessionToken
+      await withConnection(async () => {
+        // Find user by email
+        const user = await User.findOne({ email });
+        if (!user) {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid email or password'
+          });
         }
+
+        // Check password
+        const isPasswordValid = await user.comparePassword(password);
+        if (!isPasswordValid) {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid email or password'
+          });
+        }
+
+        // Generate session token
+        const sessionToken = sessionManager.create(user.id, user.email);
+
+        res.status(200).json({
+          success: true,
+          message: 'Login successful',
+          data: {
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email
+            },
+            sessionToken
+          }
+        });
       });
 
     } catch (error) {
@@ -153,24 +158,26 @@ const authController = {
         });
       }
 
-      const user = await User.findOne({ id: session.userId });
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-
-      res.status(200).json({
-        success: true,
-        data: {
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            createdAt: user.createdAt
-          }
+      await withConnection(async () => {
+        const user = await User.findOne({ id: session.userId });
+        if (!user) {
+          return res.status(404).json({
+            success: false,
+            message: 'User not found'
+          });
         }
+
+        res.status(200).json({
+          success: true,
+          data: {
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              createdAt: user.createdAt
+            }
+          }
+        });
       });
 
     } catch (error) {

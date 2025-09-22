@@ -1,6 +1,7 @@
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const sessionManager = require('../config/sessions');
+const { withConnection } = require('../config/dbConnect');
 
 const bookingController = {
   // Book a bus ticket
@@ -38,7 +39,11 @@ const bookingController = {
       }
 
       // Get user details from database using session (using custom id field, not _id)
-      const user = await User.findOne({ id: session.userId });
+      let user;
+      await withConnection(async () => {
+        user = await User.findOne({ id: session.userId });
+      });
+      
       if (!user) {
         return res.status(404).json({
           status: 'error',
@@ -141,8 +146,11 @@ const bookingController = {
         bookingTime: bookingTime ? new Date(bookingTime) : new Date()
       };
 
-      const booking = new Booking(bookingData);
-      await booking.save();
+      let booking;
+      await withConnection(async () => {
+        booking = new Booking(bookingData);
+        await booking.save();
+      });
 
       res.status(201).json({
         status: 'success',
@@ -174,17 +182,20 @@ const bookingController = {
       }
 
       // Get user details from database using the provided user ID
-      const user = await User.findOne({ id: id });
-      if (!user) {
-        return res.status(404).json({
-          status: 'error',
-          message: 'User not found'
-        });
-      }
+      let user, bookings;
+      await withConnection(async () => {
+        user = await User.findOne({ id: id });
+        if (!user) {
+          return res.status(404).json({
+            status: 'error',
+            message: 'User not found'
+          });
+        }
 
-      // Find bookings by user's email using MongoDB
-      const bookings = await Booking.find({ 'userDetails.email': user.email })
-        .sort({ bookingTime: -1 }); // Sort by booking time descending (newest first)
+        // Find bookings by user's email using MongoDB
+        bookings = await Booking.find({ 'userDetails.email': user.email })
+          .sort({ bookingTime: -1 }); // Sort by booking time descending (newest first)
+      });
 
       // Return the booking history (empty array if no bookings found)
       res.status(200).json({
@@ -221,7 +232,10 @@ const bookingController = {
         });
       }
 
-      const booking = await Booking.findOne({ bookingId: bookingId });
+      let booking;
+      await withConnection(async () => {
+        booking = await Booking.findOne({ bookingId: bookingId });
+      });
 
       if (!booking) {
         return res.status(404).json({
