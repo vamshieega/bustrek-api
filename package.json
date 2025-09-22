@@ -1,0 +1,37 @@
+{
+  "name": "bustrek-api",
+  "version": "1.0.0",
+  "description": "Bus booking API application",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "npm run clean && npm run copy-files",
+    "clean": "rm -rf dist && mkdir -p dist",
+    "copy-files": "cp -r index.js package.json src dist/",
+    "test": "echo 'No tests specified'"
+  },
+  "keywords": [
+    "bus",
+    "booking",
+    "api",
+    "nodejs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.1",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
